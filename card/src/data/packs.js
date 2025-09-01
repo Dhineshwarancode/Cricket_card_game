@@ -1,0 +1,47 @@
+export const PACK_TYPES = [
+  {
+    id: "bronze",
+    name: "Bronze Pack",
+    type: "Bronze",
+    price: 100,
+    cardsCount: 5,
+    odds: {
+      Common: 70,
+      Rare: 25,
+      Epic: 4.5,
+      Legend: 0.5,
+    },
+    gradient: "from-amber-700 via-amber-600 to-amber-800",
+    glowColor: "shadow-amber-500/50",
+  },
+  {
+    id: "silver",
+    name: "Silver Pack",
+    type: "Silver",
+    price: 250,
+    cardsCount: 5,
+    odds: {
+      Common: 40,
+      Rare: 45,
+      Epic: 13,
+      Legend: 2,
+    },
+    gradient: "from-slate-400 via-slate-300 to-slate-500",
+    glowColor: "shadow-slate-400/50",
+  },
+  {
+    id: "gold",
+    name: "Gold Pack",
+    type: "Gold",
+    price: 500,
+    cardsCount: 5,
+    odds: {
+      Common: 20,
+      Rare: 50,
+      Epic: 25,
+      Legend: 5,
+    },
+    gradient: "from-yellow-400 via-yellow-300 to-yellow-600",
+    glowColor: "shadow-yellow-400/50",
+  },
+];
