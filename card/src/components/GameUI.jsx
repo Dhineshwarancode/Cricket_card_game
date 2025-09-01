@@ -55,10 +55,7 @@ export function GameUI({ onOpenCollection }) {
             className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 sm:p-3 rounded-lg sm:rounded-xl"
             whileHover={{ scale: 1.1, rotate: 5 }}
           >
-            <img
-              src="./././public/cricket-player-logo-playing-short-concept-vector.jpg"
-              className="w-10 h-10 sm:w-8 sm:h-8 text-white rounded-lg"
-            />
+            <Trophy className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </motion.div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white">
