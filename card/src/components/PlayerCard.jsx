@@ -15,9 +15,36 @@ export function PlayerCard({
   const { player, tier } = card;
 
   const sizeClasses = {
-    small: "w-24 h-32 sm:w-32 sm:h-44",
+    small: "w-20 h-28 sm:w-24 sm:h-32 md:w-28 md:h-36",
     medium: "w-32 h-44 sm:w-40 sm:h-56",
     large: "w-36 h-48 sm:w-48 sm:h-68",
+  };
+
+  const textSizes = {
+    small: {
+      name: "text-xs",
+      team: "text-xs",
+      rating: "text-sm",
+      tier: "text-xs",
+      role: "text-xs",
+      stats: "text-xs",
+    },
+    medium: {
+      name: "text-xs sm:text-sm",
+      team: "text-xs",
+      rating: "text-sm sm:text-lg",
+      tier: "text-xs",
+      role: "text-xs",
+      stats: "text-xs",
+    },
+    large: {
+      name: "text-sm sm:text-base",
+      team: "text-sm",
+      rating: "text-lg sm:text-xl",
+      tier: "text-sm",
+      role: "text-sm",
+      stats: "text-sm",
+    },
   };
 
   const getRoleColor = (role) => {
@@ -72,9 +99,9 @@ export function PlayerCard({
     <div className="relative">
       {/* Glow effect for rare cards */}
       <motion.div
-        className={`absolute -inset-2 sm:-inset-4 rounded-lg sm:rounded-xl bg-gradient-to-r ${getTierColor(
+        className={`absolute -inset-1 sm:-inset-2 rounded-lg sm:rounded-xl bg-gradient-to-r ${getTierColor(
           tier
-        )} blur-xl ${getTierGlow(tier)}`}
+        )} blur-lg ${getTierGlow(tier)}`}
         variants={glowVariants}
         initial="hidden"
         animate={isRevealing ? "visible" : "hidden"}
@@ -91,53 +118,64 @@ export function PlayerCard({
             tier
           )} rounded-lg sm:rounded-xl border-2 ${getTierBorder(
             tier
-          )} ${getTierGlow(tier)} backdrop-blur-sm`}
+          )} ${getTierGlow(tier)} backdrop-blur-sm overflow-hidden`}
         >
           {/* Card Header */}
-          <div className="p-2 sm:p-3">
+          <div className="p-1.5 sm:p-2 md:p-3">
             <div className="flex justify-between items-start">
               <div
-                className={`px-1 sm:px-2 py-0.5 sm:py-1 rounded text-xs font-bold text-white ${getRoleColor(
-                  player.role
-                )}`}
+                className={`px-1 sm:px-2 py-0.5 sm:py-1 rounded ${
+                  textSizes[size].role
+                } font-bold text-white ${getRoleColor(player.role)}`}
               >
                 {player.role}
               </div>
               <div className="text-right">
-                <div className="text-white font-bold text-sm sm:text-lg">
+                <div
+                  className={`text-white font-bold ${textSizes[size].rating}`}
+                >
                   {player.rating}
                 </div>
-                <div className="text-white/80 text-xs">{tier}</div>
+                <div className={`text-white/80 ${textSizes[size].tier}`}>
+                  {tier}
+                </div>
               </div>
             </div>
           </div>
-
           {/* Player Info */}
-          <div className="px-2 sm:px-3 pb-2 sm:pb-3">
-            <h3 className="text-white font-bold text-xs sm:text-sm leading-tight mb-1">
-              {player.name}
+          <div className="px-1.5 sm:px-2 md:px-3 pb-1.5 sm:pb-2 md:pb-3">
+            <h3
+              className={`text-white font-bold ${textSizes[size].name} leading-tight mb-1`}
+            >
+              {size === "small" ? player.name.split(" ")[0] : player.name}
             </h3>
-            <p className="text-white/80 text-xs mb-1 sm:mb-2">{player.team}</p>
+            <p className={`text-white/80 ${textSizes[size].team} mb-1 sm:mb-2`}>
+              {player.team}
+            </p>
 
             {/* Stats */}
             <div className="space-y-0.5 sm:space-y-1">
-              <div className="flex justify-between text-xs">
+              <div className={`flex justify-between ${textSizes[size].stats}`}>
                 <span className="text-white/60">Matches</span>
                 <span className="text-white">{player.stats.matches}</span>
               </div>
               {player.stats.runs && (
-                <div className="flex justify-between text-xs">
+                <div
+                  className={`flex justify-between ${textSizes[size].stats}`}
+                >
                   <span className="text-white/60">Runs</span>
                   <span className="text-white">{player.stats.runs}</span>
                 </div>
               )}
               {player.stats.wickets && (
-                <div className="flex justify-between text-xs">
+                <div
+                  className={`flex justify-between ${textSizes[size].stats}`}
+                >
                   <span className="text-white/60">Wickets</span>
                   <span className="text-white">{player.stats.wickets}</span>
                 </div>
               )}
-              <div className="flex justify-between text-xs">
+              <div className={`flex justify-between ${textSizes[size].stats}`}>
                 <span className="text-white/60">Average</span>
                 <span className="text-white">{player.stats.average}</span>
               </div>

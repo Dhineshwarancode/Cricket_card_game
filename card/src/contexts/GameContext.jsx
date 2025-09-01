@@ -1,9 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
-import {
-  loadGameState,
-  saveGameState,
-  processPackCards,
-} from "../utils/storage";
+import { loadGameState, saveGameState } from "../utils/storage";
 import { generatePackCards } from "../utils/cardGenerator";
 
 const GameContext = createContext();
@@ -25,6 +21,8 @@ const initialPackState = {
 };
 
 function gameReducer(state, action) {
+  console.log("GameReducer action:", action.type, action.payload);
+
   switch (action.type) {
     case "LOAD_STATE":
       return {
@@ -33,6 +31,7 @@ function gameReducer(state, action) {
       };
 
     case "START_PACK_OPENING":
+      console.log("Starting pack opening with cards:", action.payload.cards);
       return {
         game: {
           ...state.game,
@@ -49,11 +48,15 @@ function gameReducer(state, action) {
       };
 
     case "REVEAL_CARD":
+      console.log("Revealing card, current index:", state.pack.revealIndex);
       return {
         ...state,
         pack: {
           ...state.pack,
-          revealIndex: state.pack.revealIndex + 1,
+          revealIndex: Math.min(
+            state.pack.revealIndex + 1,
+            state.pack.revealedCards.length
+          ),
         },
       };
 
@@ -67,12 +70,39 @@ function gameReducer(state, action) {
       };
 
     case "COMPLETE_PACK":
-      const { processedCards, newState } = processPackCards(
-        state.pack.revealedCards,
-        state.game
-      );
+      console.log("Completing pack with cards:", state.pack.revealedCards);
+
+      // Process cards for duplicates and add to collection
+      const newCollection = [...state.game.collection];
+      const newUnlocked = new Set(state.game.unlockedCards);
+      let bonusCoins = 0;
+
+      const processedCards = state.pack.revealedCards.map((card) => {
+        const isDuplicate = newUnlocked.has(card.player.id);
+
+        if (isDuplicate) {
+          // Duplicate - convert to coins
+          const coinValue = getDuplicateValue(card.tier);
+          bonusCoins += coinValue;
+          return { ...card, isDuplicate: true, coinValue };
+        } else {
+          // New card - add to collection
+          const cardWithTimestamp = { ...card, openedAt: new Date() };
+          newCollection.push(cardWithTimestamp);
+          newUnlocked.add(card.player.id);
+          return { ...card, isDuplicate: false };
+        }
+      });
+
+      const newGameState = {
+        ...state.game,
+        collection: newCollection,
+        unlockedCards: newUnlocked,
+        coins: state.game.coins + bonusCoins,
+      };
+
       return {
-        game: newState,
+        game: newGameState,
         pack: {
           ...state.pack,
           revealedCards: processedCards,
@@ -101,6 +131,16 @@ function gameReducer(state, action) {
   }
 }
 
+function getDuplicateValue(tier) {
+  const values = {
+    Common: 10,
+    Rare: 25,
+    Epic: 60,
+    Legend: 150,
+  };
+  return values[tier] || 10;
+}
+
 export function GameProvider({ children }) {
   const [state, dispatch] = useReducer(gameReducer, {
     game: initialGameState,
@@ -122,29 +162,38 @@ export function GameProvider({ children }) {
   }, [state.game]);
 
   const openPack = (pack) => {
+    console.log("Opening pack:", pack, "Current coins:", state.game.coins);
     if (state.game.coins >= pack.price) {
       const cards = generatePackCards(pack);
+      console.log("Generated cards:", cards);
       dispatch({ type: "START_PACK_OPENING", payload: { pack, cards } });
+    } else {
+      console.log("Cannot afford pack");
     }
   };
 
   const revealNextCard = () => {
+    console.log("Reveal next card called");
     dispatch({ type: "REVEAL_CARD" });
   };
 
   const revealAllCards = () => {
+    console.log("Reveal all cards called");
     dispatch({ type: "REVEAL_ALL" });
   };
 
   const completePack = () => {
+    console.log("Complete pack called");
     dispatch({ type: "COMPLETE_PACK" });
   };
 
   const resetPackOpening = () => {
+    console.log("Reset pack opening called");
     dispatch({ type: "RESET_PACK_OPENING" });
   };
 
   const stopAnimation = () => {
+    console.log("Stop animation called");
     dispatch({ type: "STOP_ANIMATION" });
   };
 

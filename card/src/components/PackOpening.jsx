@@ -10,7 +10,6 @@ export function PackOpening() {
   const {
     packOpeningState,
     revealNextCard,
-    revealAllCards,
     completePack,
     resetPackOpening,
     stopAnimation,
@@ -58,9 +57,18 @@ export function PackOpening() {
         }, 3000);
       }
     }
-  }, [packOpeningState.isOpening, packOpeningState.revealedCards]);
+  }, [
+    packOpeningState.isOpening,
+    packOpeningState.revealedCards,
+    stopAnimation,
+  ]);
 
   const handleRevealCard = () => {
+    console.log("Reveal card clicked", {
+      revealIndex: packOpeningState.revealIndex,
+      totalCards: packOpeningState.revealedCards.length,
+    });
+
     if (packOpeningState.revealIndex < packOpeningState.revealedCards.length) {
       soundManager.playSound("cardFlip");
       revealNextCard();
@@ -70,16 +78,30 @@ export function PackOpening() {
   };
 
   const handleRevealAll = () => {
+    console.log("Reveal all clicked");
     soundManager.playSound("cardFlip");
-    revealAllCards();
+
+    // Reveal all remaining cards quickly
+    const remainingCards =
+      packOpeningState.revealedCards.length - packOpeningState.revealIndex;
+    for (let i = 0; i < remainingCards; i++) {
+      setTimeout(() => {
+        revealNextCard();
+      }, i * 200);
+    }
+
+    // Complete pack after all cards are revealed
     setTimeout(() => {
       completePack();
-    }, 1000);
+    }, remainingCards * 200 + 500);
   };
 
   if (!packOpeningState.isOpening) {
     return null;
   }
+
+  const isAllRevealed =
+    packOpeningState.revealIndex >= packOpeningState.revealedCards.length;
 
   return (
     <motion.div
@@ -109,15 +131,17 @@ export function PackOpening() {
         </motion.h2>
 
         <div className="flex gap-2">
-          <motion.button
-            onClick={handleRevealAll}
-            className="px-2 sm:px-4 py-1 sm:py-2 bg-white/10 hover:bg-white/20 rounded-md sm:rounded-lg text-white font-medium backdrop-blur-sm border border-white/20 transition-all text-xs sm:text-sm"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1 sm:mr-2" />
-            Reveal All
-          </motion.button>
+          {!packOpeningState.isAnimating && !isAllRevealed && (
+            <motion.button
+              onClick={handleRevealAll}
+              className="px-2 sm:px-4 py-1 sm:py-2 bg-white/10 hover:bg-white/20 rounded-md sm:rounded-lg text-white font-medium backdrop-blur-sm border border-white/20 transition-all text-xs sm:text-sm"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1 sm:mr-2" />
+              Reveal All
+            </motion.button>
+          )}
 
           <motion.button
             onClick={resetPackOpening}
@@ -136,17 +160,17 @@ export function PackOpening() {
           className="mb-4 sm:mb-8"
           initial={{ scale: 1, rotateZ: 0 }}
           animate={{
-            scale: [1, 1.1, 1],
-            rotateZ: [-2, 2, -2, 2, 0],
+            scale: [1, 1.2, 1],
+            rotateZ: [-5, 5, -5, 5, 0],
           }}
           transition={{
-            duration: 1.5,
+            duration: 2,
             times: [0, 0.5, 1],
             ease: "easeInOut",
           }}
         >
           <div
-            className={`w-20 h-20 sm:w-32 sm:h-32 bg-gradient-to-br ${packOpeningState.currentPack?.gradient} rounded-xl sm:rounded-2xl border-2 border-white/30 flex items-center justify-center backdrop-blur-sm ${packOpeningState.currentPack?.glowColor}`}
+            className={`w-20 h-20 sm:w-32 sm:h-32 bg-gradient-to-br ${packOpeningState.currentPack?.gradient} rounded-xl sm:rounded-2xl border-2 border-white/30 flex items-center justify-center backdrop-blur-sm ${packOpeningState.currentPack?.glowColor} shadow-2xl`}
           >
             <Package className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
           </div>
@@ -154,79 +178,83 @@ export function PackOpening() {
       )}
 
       {/* Cards Grid */}
-      <div className="flex flex-wrap justify-center gap-2 sm:gap-4 max-w-6xl px-2">
-        <AnimatePresence>
-          {packOpeningState.revealedCards.map((card, index) => (
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-4 max-w-6xl px-2 mb-4">
+        {packOpeningState.revealedCards.map((card, index) => {
+          const isRevealed = index < packOpeningState.revealIndex;
+
+          return (
             <motion.div
               key={card.id}
-              initial={{ opacity: 0, y: 100, rotateY: 180 }}
+              initial={{ opacity: 0, y: 50, rotateY: 180 }}
               animate={{
-                opacity: index < packOpeningState.revealIndex ? 1 : 0,
-                y: index < packOpeningState.revealIndex ? 0 : 100,
-                rotateY: index < packOpeningState.revealIndex ? 0 : 180,
+                opacity: packOpeningState.isAnimating ? 0 : 1,
+                y: packOpeningState.isAnimating ? 50 : 0,
+                rotateY: isRevealed ? 0 : 180,
               }}
               transition={{
-                delay: index * 0.3,
-                duration: 0.8,
+                delay: packOpeningState.isAnimating ? 0 : 0.2,
+                duration: 0.6,
                 ease: "easeOut",
               }}
               className="transform-gpu"
             >
-              <PlayerCard
-                card={card}
-                isRevealing={index === packOpeningState.revealIndex - 1}
-                delay={index * 0.2}
-                size="medium"
-              />
+              {isRevealed ? (
+                <PlayerCard
+                  card={card}
+                  isRevealing={index === packOpeningState.revealIndex - 1}
+                  delay={0}
+                  size="medium"
+                />
+              ) : (
+                <div className="w-32 h-44 sm:w-40 sm:h-56 bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg sm:rounded-xl border-2 border-white/20 flex items-center justify-center">
+                  <Package className="w-8 h-8 sm:w-12 sm:h-12 text-white/40" />
+                </div>
+              )}
             </motion.div>
-          ))}
-        </AnimatePresence>
+          );
+        })}
       </div>
 
       {/* Controls */}
       {!packOpeningState.isAnimating && (
-        <div className="mt-4 sm:mt-8 text-center">
-          {packOpeningState.revealIndex <
-          packOpeningState.revealedCards.length ? (
-            <div
-              className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-center"
-            >
-              <motion.button
-                onClick={handleRevealCard}
-                className="px-6 sm:px-8 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg sm:rounded-xl text-white font-bold text-sm sm:text-lg shadow-lg hover:shadow-xl transition-all"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.9 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                Reveal Next Card
-              </motion.button>
-            </div>
-          ) : (
+        <div className="text-center">
+          {!isAllRevealed ? (
             <motion.button
-              onClick={completePack}
-              className="px-6 sm:px-8 py-2 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-lg sm:rounded-xl text-white font-bold text-sm sm:text-lg shadow-lg hover:shadow-xl transition-all"
+              onClick={handleRevealCard}
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg sm:rounded-xl text-white font-bold text-base sm:text-lg shadow-lg hover:shadow-xl transition-all"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0,delay:1}}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
             >
-              Continue to Collection
+              Reveal Next Card
+            </motion.button>
+          ) : (
+            <motion.button
+              onClick={completePack}
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-lg sm:rounded-xl text-white font-bold text-base sm:text-lg shadow-lg hover:shadow-xl transition-all"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              View Pack Summary
             </motion.button>
           )}
         </div>
       )}
 
       {/* Progress indicator */}
-      <div className="absolute bottom-2 sm:bottom-4 left-1/2 transform -translate-x-1/2">
+      <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2">
         <div className="flex gap-1 sm:gap-2">
           {Array.from({ length: packOpeningState.revealedCards.length }).map(
             (_, index) => (
               <div
                 key={index}
-                className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-300 ${
+                className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
                   index < packOpeningState.revealIndex
-                    ? "bg-white"
+                    ? "bg-white shadow-lg"
                     : "bg-white/30"
                 }`}
               />

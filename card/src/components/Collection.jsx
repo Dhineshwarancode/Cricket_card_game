@@ -114,7 +114,7 @@ export function Collection({ isOpen, onClose }) {
         {/* Cards Grid */}
         <div className="p-4 sm:p-6 overflow-auto max-h-[50vh] sm:max-h-[60vh]">
           {filteredCards.length > 0 ? (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-8 sm:gap-10">
               {filteredCards.map((card, index) => (
                 <motion.div
                   key={card.id}
